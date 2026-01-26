@@ -1,85 +1,137 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LVRG Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { margin: 0; padding: 20px; font-family: 'Inter', sans-serif; background: #fff; }
-        .nav { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
-        .btn { padding: 8px 16px; border-radius: 30px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; transition: 0.2s; }
+        body { margin: 0; padding: 15px; font-family: 'Inter', sans-serif; background: #fff; color: #1e293b; overflow-x: hidden; }
+        
+        /* Nav & Status */
+        .lvrg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
+        .lvrg-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+        
+        .btn { 
+            padding: 6px 12px; border-radius: 20px; border: 1px solid #e2e8f0; 
+            background: #fff; cursor: pointer; font-size: 10px; font-weight: 700; 
+            color: #64748b; text-transform: uppercase; transition: 0.2s; 
+        }
         .btn.active { background: #000; color: #fff; border-color: #000; }
-        .card { padding: 24px; margin-bottom: 16px; border-radius: 12px; border: 1px solid #f1f5f9; background: #f8fafc; position: relative; text-align: left; }
-        .tag { font-size: 10px; font-weight: 900; padding: 4px 10px; border-radius: 4px; color: #fff; text-transform: uppercase; margin-bottom: 12px; display: inline-block; }
-        .tag-open { background: #ef4444; } .tag-need { background: #22c55e; } .tag-ref { background: #f59e0b; }
-        .email-btn { display: inline-block; margin-top: 15px; padding: 10px 18px; background: #1e293b; border-radius: 8px; color: #fff !important; font-size: 11px; font-weight: 700; text-decoration: none; }
-        #status { font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 1px; margin-left: auto; align-self: center; }
+        #status { font-size: 9px; font-weight: 800; color: #cbd5e1; letter-spacing: 1px; }
+
+        /* Card Design */
+        .card { 
+            padding: 20px; margin-bottom: 15px; border-radius: 10px; 
+            border: 1px solid #f1f5f9; background: #f8fafc; text-align: left; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+        .tag { 
+            font-size: 9px; font-weight: 900; padding: 3px 8px; border-radius: 4px; 
+            color: #fff; text-transform: uppercase; margin-bottom: 10px; display: inline-block; 
+        }
+        .tag-open { background: #ef4444; }
+        .tag-need { background: #22c55e; }
+        .tag-ref { background: #f59e0b; }
+        .tag-gen { background: #94a3b8; }
+
+        .head { display: block; font-size: 16px; color: #0f172a; margin-bottom: 6px; line-height: 1.3; font-weight: 700; }
+        .body { font-size: 13px; color: #475569; margin: 8px 0 15px 0; line-height: 1.5; }
+        
+        .card-footer { 
+            border-top: 1px solid #f1f5f9; padding-top: 12px; 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
+        .agent { font-size: 11px; font-weight: 700; color: #1e293b; }
+        .email-link { font-size: 11px; font-weight: 800; color: #2563eb; text-decoration: none; text-transform: uppercase; }
+        
+        /* Footer Prompts */
+        .footer-nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; margin-top: 10px; border-top: 1px solid #f1f5f9; }
+        .scroll-hint { font-size: 9px; font-weight: 800; color: #cbd5e1; text-transform: uppercase; }
+        .view-all { font-size: 10px; font-weight: 900; color: #000; text-decoration: none; border: 1px solid #000; padding: 5px 10px; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <div class="nav">
-        <button class="btn active" onclick="filter('All', event)">All</button>
-        <button class="btn" onclick="filter('Open House', event)">Open Houses</button>
-        <button class="btn" onclick="filter('Need', event)">Needs</button>
-        <button class="btn" onclick="filter('Referral', event)">Referrals</button>
+
+    <div class="lvrg-header">
+        <div class="lvrg-filters" id="filters">
+            <button class="btn active" onclick="filterData('All', event)">All</button>
+            <button class="btn" onclick="filterData('Open House', event)">Open</button>
+            <button class="btn" onclick="filterData('Need', event)">Needs</button>
+            <button class="btn" onclick="filterData('Referral', event)">Refs</button>
+        </div>
         <div id="status">SYNCING...</div>
     </div>
-    <div id="board"><p style="text-align:center; color:#94a3b8; padding:50px;">Loading announcements...</p></div>
+
+    <div id="board">
+        <p style="text-align: center; color: #94a3b8; padding: 40px;">Loading Board...</p>
+    </div>
 
     <script>
-        let data = [];
-        const url = 'https://script.google.com/macros/s/AKfycbwoDXOcBLmaGTsjpyt8JRXoTCeHWjHzqpOZO8l74XfMbz5JZSe3ygmIQRUJ3UfGeJzI/exec';
+        let masterData = [];
+        const webAppUrl = 'https://script.google.com/macros/s/AKfycbwoDXOcBLmaGTsjpyt8JRXoTCeHWjHzqpOZO8l74XfMbz5JZSe3ygmIQRUJ3UfGeJzI/exec';
 
-        async function init() {
+        async function loadBoard() {
             try {
-                const r = await fetch(url);
-                data = await r.json();
+                const response = await fetch(webAppUrl);
+                masterData = await response.json();
                 document.getElementById('status').innerText = 'LIVE UPDATED';
-                filter('All');
-            } catch(e) { document.getElementById('board').innerText = 'Connection Error.'; }
+                filterData('All');
+            } catch (err) {
+                document.getElementById('board').innerHTML = `<p style="text-align:center; padding:20px;">Connection Error</p>`;
+            }
         }
 
-     function filterData(cat, event) {
-    if (event) {
-        document.querySelectorAll('.btn').forEach(b => {
-            b.style.background = '#fff';
-            b.style.color = '#64748b';
-            b.style.borderColor = '#e2e8f0';
-        });
-        event.target.style.background = '#000';
-        event.target.style.color = '#fff';
-        event.target.style.borderColor = '#000';
-    }
+        function filterData(category, event) {
+            if (event) {
+                document.querySelectorAll('.btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+            }
 
-    const list = document.getElementById('board');
-    let items = cat === 'All' ? data : data.filter(i => i.type.includes(cat));
+            const board = document.getElementById('board');
+            const filtered = category === 'All' ? masterData : masterData.filter(i => String(i.type).includes(category));
 
-    list.innerHTML = items.map(i => {
-        // --- DATE FORMATTING FIX ---
-        const d = new Date(i.date);
-        const formattedDate = d.toLocaleDateString('en-US', { 
-            weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' 
-        }) + ' ' + d.toLocaleTimeString('en-US', { 
-            hour: '2-digit', minute: '2-digit', hour12: true 
-        });
+            if (filtered.length === 0) {
+                board.innerHTML = `<p style="text-align:center; padding:40px; color:#94a3b8;">No ${category} found.</p>`;
+                return;
+            }
 
-        return `
-            <div class="card">
-                <span style="float:right; font-size:10px; color:#94a3b8; font-weight:bold;">${formattedDate}</span>
-                <span class="tag ${i.type.includes('Open')?'tag-open':i.type.includes('Need')?'tag-need':'tag-ref'}">${i.type}</span>
-                <strong style="display:block; font-size:18px; color:#0f172a; margin-bottom:6px;">${i.head}</strong>
-                <p style="font-size:14px; color:#475569; margin:0 0 12px 0; line-height:1.5;">${i.body}</p>
-                <div style="border-top:1px solid #f1f5f9; padding-top:12px; display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:12px; font-weight:700;">— ${i.name}</span>
-                    <a href="mailto:${i.email}" class="email-btn">Email Agent</a>
+            board.innerHTML = filtered.map(item => {
+                // Formatting Date
+                const d = new Date(item.date);
+                const cleanDate = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' @ ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+                // Tag Logic
+                let tagClass = 'tag-gen';
+                if (item.type.includes('Open')) tagClass = 'tag-open';
+                else if (item.type.includes('Need')) tagClass = 'tag-need';
+                else if (item.type.includes('Referral')) tagClass = 'tag-ref';
+
+                return `
+                    <div class="card">
+                        <span style="float:right; font-size:10px; font-weight:bold; color:#cbd5e1;">${cleanDate}</span>
+                        <span class="tag ${tagClass}">${item.type}</span>
+                        <strong class="head">${item.head}</strong>
+                        <p class="body">${item.body}</p>
+                        <div class="card-footer">
+                            <span class="agent">— ${item.name}</span>
+                            <a href="mailto:${item.email}?subject=LVRG Inquiry" class="email-link">Email Agent</a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Footer Section
+            board.innerHTML += `
+                <div class="footer-nav">
+                    <span class="scroll-hint">↓ Scroll for more</span>
+                    <a href="https://YOUR_CARRD_FULL_URL_HERE" target="_parent" class="view-all">VIEW ALL →</a>
                 </div>
-            </div>`;
-    }).join('');
+            `;
+        }
 
-    // --- ADDING THE PROMPTS & VIEW ALL BUTTON ---
-    const footerHtml = `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 5px; border-top: 1px solid #eee; margin-top: 10px;">
-            <span style="font-size:10px; font-weight:800; color:#cbd5e1; text-transform:uppercase;">↓ Scroll to view more</span>
-            <a href="https://YOUR_CARRD_URL_OR_SECTION" target="_parent" style="font-size:11px; font-weight:900; color:#000; text-decoration:none; border: 1px solid #000; padding: 4px 10px; border-radius: 4px;">VIEW ALL ANNOUNCEMENTS →</a>
-        </div>
-    `;
-    list.innerHTML += footerHtml;
-}
+        loadBoard();
+    </script>
+
+</body>
+</html>
