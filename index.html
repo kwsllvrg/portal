@@ -1,25 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body { margin: 0; padding: 15px; font-family: 'Inter', sans-serif; background: #fff; color: #1e293b; }
-        .nav { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
         
-        /* Updated Filters */
-        .btn { padding: 8px 14px; border-radius: 20px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; }
+        /* Navigation & Filters */
+        .nav { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .btn { 
+            padding: 8px 14px; border-radius: 20px; border: 1px solid #e2e8f0; 
+            background: #fff; cursor: pointer; font-size: 11px; font-weight: 700; 
+            text-transform: uppercase; color: #64748b; transition: 0.2s;
+        }
         .btn.active { background: #000; color: #fff; border-color: #000; }
         
-        .card { padding: 20px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #f1f5f9; background: #f8fafc; position: relative; }
-        .tag { font-size: 10px; font-weight: 900; padding: 4px 10px; border-radius: 4px; color: #fff; text-transform: uppercase; margin-bottom: 12px; display: inline-block; }
-        .tag-open { background: #ef4444; } .tag-need { background: #22c55e; } .tag-ref { background: #f59e0b; } .tag-vendor { background: #6366f1; } .tag-gen { background: #94a3b8; }
+        /* Card Styling */
+        .card { 
+            padding: 20px; margin-bottom: 15px; border-radius: 12px; 
+            border: 1px solid #f1f5f9; background: #f8fafc; position: relative; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .tag { 
+            font-size: 10px; font-weight: 900; padding: 4px 10px; border-radius: 4px; 
+            color: #fff; text-transform: uppercase; margin-bottom: 12px; display: inline-block; 
+        }
+        .tag-open { background: #ef4444; } 
+        .tag-need { background: #22c55e; } 
+        .tag-ref { background: #f59e0b; } 
+        .tag-vendor { background: #6366f1; } 
+        .tag-gen { background: #94a3b8; }
         
-        /* RESTORED BLACK BUTTONS */
-        .email-btn { display: inline-block; padding: 10px 18px; background: #1e293b; border-radius: 8px; color: #fff !important; font-size: 11px; font-weight: 800; text-decoration: none; text-transform: uppercase; }
+        /* Email Button Styling */
+        .email-btn { 
+            display: inline-block; padding: 10px 18px; background: #1e293b; 
+            border-radius: 8px; color: #fff !important; font-size: 11px; 
+            font-weight: 800; text-decoration: none; text-transform: uppercase; 
+            border: none; cursor: pointer; transition: background 0.2s;
+        }
+        .email-btn:hover { background: #000; }
         
-        .footer-nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 5px; border-top: 2px solid #f1f5f9; margin-top: 10px; }
+        /* Footer Navigation */
+        .footer-nav { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px 5px; border-top: 2px solid #f1f5f9; margin-top: 10px; 
+        }
         .scroll-hint { font-size: 11px; font-weight: 900; color: #1e293b; text-transform: uppercase; }
-        .view-all { font-size: 11px; font-weight: 900; color: #000; text-decoration: underline; }
+        .view-all { font-size: 11px; font-weight: 900; color: #000; text-decoration: underline; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -31,19 +59,22 @@
         <button class="btn" onclick="filterData('Vendor', event)">Vendors</button>
         <div style="margin-left:auto; font-size:9px; font-weight:800; color:#cbd5e1;">LIVE SYNC</div>
     </div>
+    
     <div id="board">Loading announcements...</div>
 
     <script>
         let masterData = [];
-        // PASTE YOUR NEW DEPLOYMENT URL BELOW
-        const webAppUrl = 'https://script.google.com/macros/s/AKfycbx-nU72nhgLiGZEOFVkeGnqsrK7oGNAVLPO8AaNwgzrOnKN9orKoLGQh4G_mxkgRwEx/exec';
+        // MAKE SURE THIS IS YOUR LATEST GOOGLE DEPLOYMENT URL
+        const webAppUrl = 'PASTE_YOUR_NEW_SCRIPT_URL_HERE';
 
         async function load() {
             try {
                 const res = await fetch(webAppUrl);
                 masterData = await res.json();
                 filterData('All');
-            } catch (e) { document.getElementById('board').innerText = 'Sync Error'; }
+            } catch (e) { 
+                document.getElementById('board').innerText = 'Sync Error. Please check your connection.'; 
+            }
         }
 
         function filterData(cat, e) {
@@ -55,7 +86,8 @@
             const items = cat === 'All' ? masterData : masterData.filter(i => String(i.type).includes(cat));
 
             board.innerHTML = items.map(i => {
-                const d = new Date(i.timestamp); // Using timestamp for accurate time
+                // Using the Timestamp (Column A) for the most accurate posting time
+                const d = new Date(i.timestamp); 
                 const cleanDate = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' @ ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                 
                 let tClass = 'tag-gen';
@@ -63,6 +95,9 @@
                 else if(i.type.includes('Need')) tClass = 'tag-need';
                 else if(i.type.includes('Referral')) tClass = 'tag-ref';
                 else if(i.type.includes('Vendor')) tClass = 'tag-vendor';
+
+                // Subject line for the email
+                const subject = encodeURIComponent(`Inquiry: ${i.head}`);
 
                 return `
                     <div class="card">
@@ -72,13 +107,15 @@
                         <p style="font-size:14px; color:#475569; margin:0 0 15px 0; line-height:1.5;">${i.body}</p>
                         <div style="border-top:1px solid #f1f5f9; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:13px; font-weight:700;">— ${i.name}</span>
-                            <a href="mailto:${i.email}?subject=Inquiry: ${i.head}" class="email-btn">Email Agent</a>
+                            <button onclick="window.top.location.href='mailto:${i.email}?subject=${subject}'" class="email-btn">
+                                Email Agent
+                            </button>
                         </div>
                     </div>`;
             }).join('') + `
                 <div class="footer-nav">
                     <span class="scroll-hint">⬇ Scroll for more</span>
-                    <a href="https://portal.mykwsl.com/#announcements" target="_parent" class="view-all">VIEW FULL BOARD →</a>
+                    <a href="https://YOUR_CARRD_SITE.carrd.co/#all" target="_parent" class="view-all">VIEW FULL BOARD →</a>
                 </div>`;
         }
         load();
