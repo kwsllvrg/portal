@@ -37,25 +37,46 @@
             } catch(e) { document.getElementById('board').innerText = 'Connection Error.'; }
         }
 
-        function filter(cat, e) {
-            if(e) {
-                document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-            }
-            const items = cat === 'All' ? data : data.filter(i => i.type.includes(cat));
-            document.getElementById('board').innerHTML = items.map(i => `
-                <div class="card">
-                    <span style="float:right; font-size:11px; color:#94a3b8; font-weight:bold;">${i.date}</span>
-                    <span class="tag ${i.type.includes('Open')?'tag-open':i.type.includes('Need')?'tag-need':'tag-ref'}">${i.type}</span>
-                    <strong style="display:block; font-size:18px; color:#0f172a; margin-bottom:6px;">${i.head}</strong>
-                    <p style="font-size:15px; color:#475569; margin:0 0 15px 0; line-height:1.5;">${i.body}</p>
-                    <div style="border-top:1px solid #f1f5f9; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:13px; font-weight:700;">— ${i.name}</span>
-                        <a href="mailto:${i.email}" class="email-btn">Email Agent</a>
-                    </div>
-                </div>`).join('') || '<p style="text-align:center; padding:30px;">No matches found.</p>';
-        }
-        init();
-    </script>
-</body>
-</html>
+      function filterData(cat, event) {
+    if (event) {
+        document.querySelectorAll('.btn').forEach(b => {
+            b.style.background = '#fff';
+            b.style.color = '#64748b';
+            b.style.borderColor = '#e2e8f0';
+        });
+        event.target.style.background = '#000';
+        event.target.style.color = '#fff';
+        event.target.style.borderColor = '#000';
+    }
+
+    const list = document.getElementById('ann-list');
+    let items = cat === 'All' ? masterData : masterData.filter(i => String(i.type).includes(cat));
+    
+    // Limit to Top 3 for the "Dashboard" look
+    const displayItems = items.slice(0, 3);
+
+    list.innerHTML = displayItems.map(i => {
+        let tagColor = '#94a3b8';
+        if (String(i.type).includes('Open')) tagColor = '#ef4444';
+        if (String(i.type).includes('Need')) tagColor = '#22c55e';
+        if (String(i.type).includes('Referral')) tagColor = '#f59e0b';
+
+        return `
+            <div style="padding: 15px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #f1f5f9; background: #f8fafc;">
+                <span style="float:right; font-size:10px; font-weight:bold; color:#94a3b8;">${String(i.date).split(' 00:00:00')[0]}</span>
+                <span style="font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 4px; color: #fff; text-transform: uppercase; background: ${tagColor};">${i.type}</span>
+                <strong style="display:block; font-size:15px; color:#0f172a; margin: 8px 0 4px 0;">${i.head}</strong>
+                <p style="font-size:13px; color:#475569; margin:0 0 10px 0; line-height:1.4;">${i.body}</p>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:11px; font-weight:700; color: #1e293b;">— ${i.name}</span>
+                    <a href="mailto:${i.email}" style="font-size: 11px; font-weight: 700; color: #2563eb; text-decoration: none;">Email Agent →</a>
+                </div>
+            </div>`;
+    }).join('');
+
+    if (items.length > 3) {
+        list.innerHTML += `<div style="text-align:center; margin-top:10px;">
+            <button onclick="window.open('YOUR_FULL_BOARD_LINK')" style="background:none; border:none; color:#64748b; font-size:11px; font-weight:bold; cursor:pointer; text-decoration:underline;">+ VIEW ALL (${items.length})</button>
+        </div>`;
+    }
+}
