@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { margin: 0; padding: 15px; font-family: 'Inter', sans-serif; background: #fff; color: #1e293b; overflow: hidden; }
+        /* Removed overflow:hidden to allow natural expansion */
+        body { margin: 0; padding: 10px; font-family: 'Inter', sans-serif; background: transparent; color: #1e293b; }
         
-        /* Navigation & Filters */
         .nav { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
         .btn { 
             padding: 8px 14px; border-radius: 20px; border: 1px solid #e2e8f0; 
@@ -16,17 +16,6 @@
         }
         .btn.active { background: #000; color: #fff; border-color: #000; }
         
-        /* INTERNAL SCROLL CONTAINER - Prevents the 'Scroll Trap' */
-        #scroll-box { 
-            height: 550px; /* Adjust this to fit your Carrd section height */
-            overflow-y: auto; 
-            padding-right: 8px; 
-        }
-        #scroll-box::-webkit-scrollbar { width: 6px; }
-        #scroll-box::-webkit-scrollbar-track { background: #f1f5f9; }
-        #scroll-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-        /* Card Styling */
         .card { 
             padding: 20px; margin-bottom: 15px; border-radius: 12px; 
             border: 1px solid #f1f5f9; background: #f8fafc; position: relative; 
@@ -41,7 +30,6 @@
         .tag-vendor { background: #6366f1; } 
         .tag-gen { background: #94a3b8; }
         
-        /* Email Button Styling */
         .email-btn { 
             display: inline-block; padding: 10px 18px; background: #1e293b; 
             border-radius: 8px; color: #fff !important; font-size: 11px; 
@@ -50,12 +38,10 @@
         }
         .email-btn:hover { background: #000; }
         
-        /* Footer Navigation */
         .footer-nav { 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 15px 5px; border-top: 2px solid #f1f5f9; margin-top: 10px; 
         }
-        .scroll-hint { font-size: 11px; font-weight: 900; color: #1e293b; text-transform: uppercase; }
         .view-all { font-size: 11px; font-weight: 900; color: #000; text-decoration: underline; cursor: pointer; }
     </style>
 </head>
@@ -66,12 +52,9 @@
         <button class="btn" onclick="filterData('Need', event)">Needs</button>
         <button class="btn" onclick="filterData('Referral', event)">Referrals</button>
         <button class="btn" onclick="filterData('Vendor', event)">Vendors</button>
-        <div style="margin-left:auto; font-size:9px; font-weight:800; color:#cbd5e1;">LIVE SYNC</div>
     </div>
     
-    <div id="scroll-box">
-        <div id="board">Loading announcements...</div>
-    </div>
+    <div id="board">Loading announcements...</div>
 
     <script>
         let masterData = [];
@@ -82,9 +65,7 @@
                 const res = await fetch(webAppUrl);
                 masterData = await res.json();
                 filterData('All');
-            } catch (e) { 
-                document.getElementById('board').innerText = 'Sync Error. Please check your connection.'; 
-            }
+            } catch (e) { document.getElementById('board').innerText = 'Sync Error'; }
         }
 
         function filterData(cat, e) {
@@ -100,7 +81,6 @@
             const displayItems = showAll ? items : items.slice(0, 3);
 
             board.innerHTML = displayItems.map(i => {
-                // Formatting the 'published' date from your script
                 const d = i.published ? new Date(i.published) : new Date();
                 const cleanDate = isNaN(d) ? "Recently" : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' @ ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                 
@@ -120,7 +100,7 @@
                         <p style="font-size:14px; color:#475569; margin:0 0 15px 0; line-height:1.5;">${i.body}</p>
                         <div style="border-top:1px solid #f1f5f9; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:13px; font-weight:700;">— ${i.name}</span>
-                           <button onclick="const win = window.open('mailto:${i.email}?subject=${subject}', '_blank'); if (win) { win.close(); }" class="email-btn">
+                            <button onclick="const win = window.open('mailto:${i.email}?subject=${subject}', '_blank'); if (win) { setTimeout(() => win.close(), 100); }" class="email-btn">
                                 Email Agent
                             </button>
                         </div>
@@ -130,7 +110,7 @@
             if (!showAll && items.length > 3) {
                 board.innerHTML += `
                     <div class="footer-nav">
-                        <span class="scroll-hint">⬇ ${items.length - 3} MORE POSTS IN BOX</span>
+                        <span style="font-size:11px; font-weight:900;">⬇ SCROLL PAGE TO SEE MORE</span>
                         <a href="https://portal.mykwsl.com/#announcements" target="_parent" class="view-all">VIEW FULL BOARD →</a>
                     </div>`;
             }
