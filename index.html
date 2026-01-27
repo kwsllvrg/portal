@@ -64,8 +64,7 @@
 
     <script>
         let masterData = [];
-        // MAKE SURE THIS IS YOUR LATEST GOOGLE DEPLOYMENT URL
-        const webAppUrl = 'https://script.google.com/macros/s/AKfycbx-nU72nhgLiGZEOFVkeGnqsrK7oGNAVLPO8AaNwgzrOnKN9orKoLGQh4G_mxkgRwEx/exec';
+        const webAppUrl = 'https://script.google.com/macros/s/AKfycbwoDXOcBLmaGTsjpyt8JRXoTCeHWjHzqpOZO8l74XfMbz5JZSe3ygmIQRUJ3UfGeJzI/exec';
 
         async function load() {
             try {
@@ -77,58 +76,55 @@
             }
         }
 
-function filterData(cat, e) {
-    if(e) {
-        document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-    }
-    const board = document.getElementById('board');
-    let items = cat === 'All' ? masterData : masterData.filter(i => String(i.type).includes(cat));
+        function filterData(cat, e) {
+            if(e) {
+                document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+            }
+            const board = document.getElementById('board');
+            let items = cat === 'All' ? masterData : masterData.filter(i => String(i.type).includes(cat));
 
-    // --- SMART LIMIT LOGIC ---
-    // Check if the browser URL has "?view=all" in it
-    const urlParams = new URLSearchParams(window.location.search);
-    const showAll = urlParams.get('view') === 'all';
+            // URL Logic: Check if we should show all or just 3
+            const urlParams = new URLSearchParams(window.location.search);
+            const showAll = urlParams.get('view') === 'all';
+            const displayItems = showAll ? items : items.slice(0, 3);
 
-    // If NOT showing all, slice to 3. If showing all, show everything.
-    const displayItems = showAll ? items : items.slice(0, 3);
+            board.innerHTML = displayItems.map(i => {
+                const d = new Date(i.timestamp); 
+                const cleanDate = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' @ ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                
+                let tClass = 'tag-gen';
+                if(i.type.includes('Open')) tClass = 'tag-open';
+                else if(i.type.includes('Need')) tClass = 'tag-need';
+                else if(i.type.includes('Referral')) tClass = 'tag-ref';
+                else if(i.type.includes('Vendor')) tClass = 'tag-vendor';
 
-    board.innerHTML = displayItems.map(i => {
-        const d = new Date(i.timestamp); 
-        const cleanDate = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' @ ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        
-        let tClass = 'tag-gen';
-        if(i.type.includes('Open')) tClass = 'tag-open';
-        else if(i.type.includes('Need')) tClass = 'tag-need';
-        else if(i.type.includes('Referral')) tClass = 'tag-ref';
-        else if(i.type.includes('Vendor')) tClass = 'tag-vendor';
+                const subject = encodeURIComponent(`Inquiry: ${i.head}`);
 
-        const subject = encodeURIComponent(`Inquiry: ${i.head}`);
+                return `
+                    <div class="card">
+                        <span style="float:right; font-size:10px; color:#94a3b8; font-weight:bold;">${cleanDate}</span>
+                        <span class="tag ${tClass}">${i.type}</span>
+                        <strong style="display:block; font-size:18px; color:#0f172a; margin-bottom:6px;">${i.head}</strong>
+                        <p style="font-size:14px; color:#475569; margin:0 0 15px 0; line-height:1.5;">${i.body}</p>
+                        <div style="border-top:1px solid #f1f5f9; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:13px; font-weight:700;">— ${i.name}</span>
+                            <button onclick="window.top.location.href='mailto:${i.email}?subject=${subject}'" class="email-btn">
+                                Email Agent
+                            </button>
+                        </div>
+                    </div>`;
+            }).join('');
 
-        return `
-            <div class="card">
-                <span style="float:right; font-size:10px; color:#94a3b8; font-weight:bold;">${cleanDate}</span>
-                <span class="tag ${tClass}">${i.type}</span>
-                <strong style="display:block; font-size:18px; color:#0f172a; margin-bottom:6px;">${i.head}</strong>
-                <p style="font-size:14px; color:#475569; margin:0 0 15px 0; line-height:1.5;">${i.body}</p>
-                <div style="border-top:1px solid #f1f5f9; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
-                    <span style="font-size:13px; font-weight:700;">— ${i.name}</span>
-                    <button onclick="window.top.location.href='mailto:${i.email}?subject=${subject}'" class="email-btn">
-                        Email Agent
-                    </button>
-                </div>
-            </div>`;
-    }).join('');
-
-    // Hide the "View All" button if we are already on the "Full View"
-    if (!showAll && items.length > 3) {
-        board.innerHTML += `
-            <div class="footer-nav">
-                <span class="scroll-hint">${items.length - 3} more hidden...</span>
-                <a href="https://YOUR_CARRD_SITE.carrd.co/#all" target="_parent" class="view-all">VIEW ALL ${items.length} →</a>
-            </div>`;
-    }
-}
+            // Footer logic: only show "View All" on the limited home view
+            if (!showAll && items.length > 3) {
+                board.innerHTML += `
+                    <div class="footer-nav">
+                        <span class="scroll-hint">⬇ ${items.length - 3} MORE POSTS</span>
+                        <a href="https://portal.mykwsl.com/#announcements" target="_parent" class="view-all">VIEW FULL BOARD →</a>
+                    </div>`;
+            }
+        }
         load();
     </script>
 </body>
