@@ -77,47 +77,58 @@
             }
         }
 
-        function filterData(cat, e) {
-            if(e) {
-                document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-            }
-            const board = document.getElementById('board');
-            const items = cat === 'All' ? masterData : masterData.filter(i => String(i.type).includes(cat));
+function filterData(cat, e) {
+    if(e) {
+        document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+    }
+    const board = document.getElementById('board');
+    let items = cat === 'All' ? masterData : masterData.filter(i => String(i.type).includes(cat));
 
-            board.innerHTML = items.map(i => {
-                // Using the Timestamp (Column A) for the most accurate posting time
-                const d = new Date(i.timestamp); 
-                const cleanDate = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' @ ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                
-                let tClass = 'tag-gen';
-                if(i.type.includes('Open')) tClass = 'tag-open';
-                else if(i.type.includes('Need')) tClass = 'tag-need';
-                else if(i.type.includes('Referral')) tClass = 'tag-ref';
-                else if(i.type.includes('Vendor')) tClass = 'tag-vendor';
+    // --- SMART LIMIT LOGIC ---
+    // Check if the browser URL has "?view=all" in it
+    const urlParams = new URLSearchParams(window.location.search);
+    const showAll = urlParams.get('view') === 'all';
 
-                // Subject line for the email
-                const subject = encodeURIComponent(`Inquiry: ${i.head}`);
+    // If NOT showing all, slice to 3. If showing all, show everything.
+    const displayItems = showAll ? items : items.slice(0, 3);
 
-                return `
-                    <div class="card">
-                        <span style="float:right; font-size:10px; color:#94a3b8; font-weight:bold;">${cleanDate}</span>
-                        <span class="tag ${tClass}">${i.type}</span>
-                        <strong style="display:block; font-size:18px; color:#0f172a; margin-bottom:6px;">${i.head}</strong>
-                        <p style="font-size:14px; color:#475569; margin:0 0 15px 0; line-height:1.5;">${i.body}</p>
-                        <div style="border-top:1px solid #f1f5f9; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:13px; font-weight:700;">— ${i.name}</span>
-                            <button onclick="window.top.location.href='mailto:${i.email}?subject=${subject}'" class="email-btn">
-                                Email Agent
-                            </button>
-                        </div>
-                    </div>`;
-            }).join('') + `
-                <div class="footer-nav">
-                    <span class="scroll-hint">⬇ Scroll for more</span>
-                    <a href="https://portal.mykwsl.com/#announcements" target="_parent" class="view-all">VIEW FULL BOARD →</a>
-                </div>`;
-        }
+    board.innerHTML = displayItems.map(i => {
+        const d = new Date(i.timestamp); 
+        const cleanDate = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' @ ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        
+        let tClass = 'tag-gen';
+        if(i.type.includes('Open')) tClass = 'tag-open';
+        else if(i.type.includes('Need')) tClass = 'tag-need';
+        else if(i.type.includes('Referral')) tClass = 'tag-ref';
+        else if(i.type.includes('Vendor')) tClass = 'tag-vendor';
+
+        const subject = encodeURIComponent(`Inquiry: ${i.head}`);
+
+        return `
+            <div class="card">
+                <span style="float:right; font-size:10px; color:#94a3b8; font-weight:bold;">${cleanDate}</span>
+                <span class="tag ${tClass}">${i.type}</span>
+                <strong style="display:block; font-size:18px; color:#0f172a; margin-bottom:6px;">${i.head}</strong>
+                <p style="font-size:14px; color:#475569; margin:0 0 15px 0; line-height:1.5;">${i.body}</p>
+                <div style="border-top:1px solid #f1f5f9; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:13px; font-weight:700;">— ${i.name}</span>
+                    <button onclick="window.top.location.href='mailto:${i.email}?subject=${subject}'" class="email-btn">
+                        Email Agent
+                    </button>
+                </div>
+            </div>`;
+    }).join('');
+
+    // Hide the "View All" button if we are already on the "Full View"
+    if (!showAll && items.length > 3) {
+        board.innerHTML += `
+            <div class="footer-nav">
+                <span class="scroll-hint">${items.length - 3} more hidden...</span>
+                <a href="https://YOUR_CARRD_SITE.carrd.co/#all" target="_parent" class="view-all">VIEW ALL ${items.length} →</a>
+            </div>`;
+    }
+}
         load();
     </script>
 </body>
