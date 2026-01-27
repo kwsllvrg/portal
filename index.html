@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { margin: 0; padding: 15px; font-family: 'Inter', sans-serif; background: #fff; color: #1e293b; }
+        body { margin: 0; padding: 15px; font-family: 'Inter', sans-serif; background: #fff; color: #1e293b; overflow: hidden; }
         
         /* Navigation & Filters */
         .nav { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
@@ -16,11 +16,20 @@
         }
         .btn.active { background: #000; color: #fff; border-color: #000; }
         
+        /* INTERNAL SCROLL CONTAINER - Prevents the 'Scroll Trap' */
+        #scroll-box { 
+            height: 550px; /* Adjust this to fit your Carrd section height */
+            overflow-y: auto; 
+            padding-right: 8px; 
+        }
+        #scroll-box::-webkit-scrollbar { width: 6px; }
+        #scroll-box::-webkit-scrollbar-track { background: #f1f5f9; }
+        #scroll-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
         /* Card Styling */
         .card { 
             padding: 20px; margin-bottom: 15px; border-radius: 12px; 
             border: 1px solid #f1f5f9; background: #f8fafc; position: relative; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
         .tag { 
             font-size: 10px; font-weight: 900; padding: 4px 10px; border-radius: 4px; 
@@ -60,11 +69,13 @@
         <div style="margin-left:auto; font-size:9px; font-weight:800; color:#cbd5e1;">LIVE SYNC</div>
     </div>
     
-    <div id="board">Loading announcements...</div>
+    <div id="scroll-box">
+        <div id="board">Loading announcements...</div>
+    </div>
 
     <script>
         let masterData = [];
-        const webAppUrl = 'https://script.google.com/macros/s/AKfycbwoDXOcBLmaGTsjpyt8JRXoTCeHWjHzqpOZO8l74XfMbz5JZSe3ygmIQRUJ3UfGeJzI/exec';
+        const webAppUrl = 'https://script.google.com/macros/s/AKfycbz20eJ8aXdEwezcg1BLJrjksB3R8N2Zyccm1SQOfB6e-XLCcTQeUEgbLR5f5ST2ORLu/exec';
 
         async function load() {
             try {
@@ -84,14 +95,14 @@
             const board = document.getElementById('board');
             let items = cat === 'All' ? masterData : masterData.filter(i => String(i.type).includes(cat));
 
-            // URL Logic: Check if we should show all or just 3
             const urlParams = new URLSearchParams(window.location.search);
             const showAll = urlParams.get('view') === 'all';
             const displayItems = showAll ? items : items.slice(0, 3);
 
             board.innerHTML = displayItems.map(i => {
-                const d = new Date(i.timestamp); 
-                const cleanDate = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' @ ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                // Formatting the 'published' date from your script
+                const d = i.published ? new Date(i.published) : new Date();
+                const cleanDate = isNaN(d) ? "Recently" : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' @ ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                 
                 let tClass = 'tag-gen';
                 if(i.type.includes('Open')) tClass = 'tag-open';
@@ -109,18 +120,17 @@
                         <p style="font-size:14px; color:#475569; margin:0 0 15px 0; line-height:1.5;">${i.body}</p>
                         <div style="border-top:1px solid #f1f5f9; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:13px; font-weight:700;">— ${i.name}</span>
-                            <button onclick="window.top.location.href='mailto:${i.email}?subject=${subject}'" class="email-btn">
+                            <button onclick="parent.location.href='mailto:${i.email}?subject=${subject}'" class="email-btn">
                                 Email Agent
                             </button>
                         </div>
                     </div>`;
             }).join('');
 
-            // Footer logic: only show "View All" on the limited home view
             if (!showAll && items.length > 3) {
                 board.innerHTML += `
                     <div class="footer-nav">
-                        <span class="scroll-hint">⬇ ${items.length - 3} MORE POSTS</span>
+                        <span class="scroll-hint">⬇ ${items.length - 3} MORE POSTS IN BOX</span>
                         <a href="https://portal.mykwsl.com/#announcements" target="_parent" class="view-all">VIEW FULL BOARD →</a>
                     </div>`;
             }
