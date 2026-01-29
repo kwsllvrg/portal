@@ -5,10 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        /* Removed overflow:hidden to allow natural expansion */
         body { margin: 0; padding: 10px; font-family: 'Inter', sans-serif; background: transparent; color: #1e293b; }
         
-        .nav { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .search-wrapper { margin-bottom: 20px; }
+        #announcement-search {
+            width: 100%; box-sizing: border-box; padding: 14px 20px; 
+            border-radius: 50px; border: 1px solid #e2e8f0; 
+            background: #fff; font-family: 'Inter', sans-serif; 
+            font-size: 13px; outline: none; transition: 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        #announcement-search:focus { border-color: #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1); }
+
+        .nav { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
         .btn { 
             padding: 8px 14px; border-radius: 20px; border: 1px solid #e2e8f0; 
             background: #fff; cursor: pointer; font-size: 11px; font-weight: 700; 
@@ -53,6 +62,10 @@
         <button class="btn" onclick="filterData('Referral', event)">Referrals</button>
         <button class="btn" onclick="filterData('Vendor', event)">Vendors</button>
     </div>
+
+    <div class="search-wrapper">
+        <input type="text" id="announcement-search" placeholder="Search the Pulse (name, property, details)..." onkeyup="searchPosts()">
+    </div>
     
     <div id="board">Loading announcements...</div>
 
@@ -68,19 +81,33 @@
             } catch (e) { document.getElementById('board').innerText = 'Sync Error'; }
         }
 
-        function filterData(cat, e) {
-            if(e) {
-                document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-            }
-            const board = document.getElementById('board');
-            let items = cat === 'All' ? masterData : masterData.filter(i => String(i.type).includes(cat));
-
+        function searchPosts() {
+            let filter = document.getElementById('announcement-search').value.toLowerCase();
             const urlParams = new URLSearchParams(window.location.search);
-            const showAll = urlParams.get('view') === 'all';
-            const displayItems = showAll ? items : items.slice(0, 3);
+            const isFullBoard = urlParams.get('view') === 'all';
 
-            board.innerHTML = displayItems.map(i => {
+            if (filter === "") {
+                filterData(window.currentCategory || 'All');
+                return;
+            }
+
+            let matches = masterData.filter(i => {
+                let text = (i.head + i.body + i.name + i.type).toLowerCase();
+                return text.includes(filter);
+            });
+
+            let displayMatches = isFullBoard ? matches : matches.slice(0, 3);
+            renderItems(displayMatches, true);
+        }
+
+        function renderItems(items, isSearch = false) {
+            const board = document.getElementById('board');
+            if (items.length === 0 && isSearch) {
+                board.innerHTML = '<div style="text-align:center; padding:40px; color:#64748b; font-weight:700; font-size:12px;">NO MATCHES FOUND.</div>';
+                return;
+            }
+
+            board.innerHTML = items.map(i => {
                 const d = i.published ? new Date(i.published) : new Date();
                 const cleanDate = isNaN(d) ? "Recently" : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' @ ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                 
@@ -100,15 +127,29 @@
                         <p style="font-size:14px; color:#475569; margin:0 0 15px 0; line-height:1.5;">${i.body}</p>
                         <div style="border-top:1px solid #f1f5f9; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:13px; font-weight:700;">— ${i.name}</span>
-                            <button onclick="const win = window.open('mailto:${i.email}?subject=${subject}', '_blank'); if (win) { setTimeout(() => win.close(), 100); }" class="email-btn">
-                                Email Agent
-                            </button>
+                            <button onclick="window.open('mailto:${i.email}?subject=${subject}', '_blank')" class="email-btn">Email Agent</button>
                         </div>
                     </div>`;
             }).join('');
+        }
 
-            if (!showAll && items.length > 3) {
-                board.innerHTML += `
+        function filterData(cat, e) {
+            window.currentCategory = cat;
+            if(e) {
+                document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                document.getElementById('announcement-search').value = ''; 
+            }
+            
+            let items = cat === 'All' ? masterData : masterData.filter(i => String(i.type).includes(cat));
+            const urlParams = new URLSearchParams(window.location.search);
+            const isFullBoard = urlParams.get('view') === 'all';
+            
+            const displayItems = isFullBoard ? items : items.slice(0, 3);
+            renderItems(displayItems);
+
+            if (!isFullBoard && items.length > 3) {
+                document.getElementById('board').innerHTML += `
                     <div class="footer-nav">
                         <span style="font-size:11px; font-weight:900;">⬇ SCROLL PAGE TO SEE MORE</span>
                         <a href="https://portal.mykwsl.com/#announcements" target="_parent" class="view-all">VIEW FULL BOARD →</a>
