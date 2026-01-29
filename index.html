@@ -7,6 +7,7 @@
     <style>
         body { margin: 0; padding: 10px; font-family: 'Inter', sans-serif; background: transparent; color: #1e293b; }
         
+        /* Search Bar */
         .search-wrapper { margin-bottom: 20px; }
         #announcement-search {
             width: 100%; box-sizing: border-box; padding: 14px 20px; 
@@ -17,6 +18,7 @@
         }
         #announcement-search:focus { border-color: #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1); }
 
+        /* Category Nav */
         .nav { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
         .btn { 
             padding: 8px 14px; border-radius: 20px; border: 1px solid #e2e8f0; 
@@ -25,6 +27,7 @@
         }
         .btn.active { background: #000; color: #fff; border-color: #000; }
         
+        /* Post Cards */
         .card { 
             padding: 20px; margin-bottom: 15px; border-radius: 12px; 
             border: 1px solid #f1f5f9; background: #f8fafc; position: relative; 
@@ -47,11 +50,16 @@
         }
         .email-btn:hover { background: #000; }
         
+        /* Updated Footer */
         .footer-nav { 
-            display: flex; justify-content: space-between; align-items: center; 
+            display: flex; justify-content: flex-start; align-items: center; 
             padding: 15px 5px; border-top: 2px solid #f1f5f9; margin-top: 10px; 
         }
-        .view-all { font-size: 11px; font-weight: 900; color: #000; text-decoration: underline; cursor: pointer; }
+        .view-all { 
+            font-size: 11px; font-weight: 900; color: #000; text-decoration: none; 
+            border: 1px solid #000; padding: 6px 12px; border-radius: 4px; transition: 0.2s;
+        }
+        .view-all:hover { background: #000; color: #fff; }
     </style>
 </head>
 <body>
@@ -151,8 +159,7 @@
             if (!isFullBoard && items.length > 3) {
                 document.getElementById('board').innerHTML += `
                     <div class="footer-nav">
-                        <span style="font-size:11px; font-weight:900;">⬇ SCROLL PAGE TO SEE MORE</span>
-                        <a href="https://portal.mykwsl.com/#announcements" target="_parent" class="view-all">VIEW FULL BOARD →</a>
+                        <a href="https://portal.mykwsl.com/#announcements" target="_parent" class="view-all">VIEW FULL BOARD &rarr;</a>
                     </div>`;
             }
         }
